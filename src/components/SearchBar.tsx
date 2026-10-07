@@ -20,7 +20,6 @@ export default function SearchBar() {
     } else {
       params.delete('q');
     }
-
     // Aggiorna l'URL senza ricaricare l'intera pagina del browser
     replace(`${pathname}?${params.toString()}`);
   }
@@ -40,6 +39,6 @@ export default function SearchBar() {
     >
       Cerca
     </button>
-  </form>
+ </form>
 );
 }
