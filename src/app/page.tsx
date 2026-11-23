@@ -1,6 +1,7 @@
 import SearchBar from '@/components/SearchBar';
 import { searchMedia } from '@/lib/tmdb';
 import AddButton from '@/components/AddButton';
+import { getWatchlistMediaKeys, mediaKey } from '@/lib/watchlist';
 
 interface PageProps {
   searchParams: Promise<{ q?: string }>;
@@ -9,7 +10,9 @@ interface PageProps {
 export default async function Home({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const query = resolvedParams.q || '';
-  const data = query ? await searchMedia(query) : null;
+  const [data, inListKeys] = query
+    ? await Promise.all([searchMedia(query), getWatchlistMediaKeys()])
+    : [null, new Set<string>()];
 
   return (
     <main className="p-8 max-w-5xl mx-auto">
@@ -18,6 +21,19 @@ export default async function Home({ searchParams }: PageProps) {
       </h1>
 
       <SearchBar />
+
+      {data?.fuzzy && (
+        <p className="text-center text-sm text-slate-400 -mt-4 mb-6">
+          {data.suggestion ? (
+            <>
+              Nessun risultato esatto per &quot;{query}&quot;. Forse cercavi{' '}
+              <span className="font-semibold text-slate-200">{data.suggestion}</span>?
+            </>
+          ) : (
+            <>Nessun risultato esatto per &quot;{query}&quot;. Ecco i titoli più simili.</>
+          )}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {data && data.results.length > 0 ? (
@@ -67,7 +83,11 @@ export default async function Home({ searchParams }: PageProps) {
                       <span className="font-semibold text-amber-400 flex items-center gap-1">
                         ★ {typeof item.vote_average === 'number' ? item.vote_average.toFixed(1) : 'N/D'}
                       </span>
-                      <AddButton item={item} />
+                      <AddButton
+                        tmdbId={item.id}
+                        mediaType={item.media_type}
+                        initiallyInList={inListKeys.has(mediaKey(item.media_type, item.id))}
+                      />
                     </div>
                   </div>
                 </div>
